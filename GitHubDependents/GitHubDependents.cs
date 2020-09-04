@@ -44,34 +44,10 @@ namespace GitHubDependents
     [PublicAPI]
     public static class GitHubDependents
     {
-        /// <summary>
-        /// Scrapes GitHub for Dependents of a specific repository.
-        /// </summary>
-        /// <param name="user">GitHub user or organization, eg: dotnet</param>
-        /// <param name="repository">GitHub repository name, eg: roslyn</param>
-        /// <param name="packageID">Optional package ID to use, eg: UGFja2FnZS0xNTY3MzEzNTc%3D</param>
-        /// <returns>List of all Dependents using the repository</returns>
-        /// <exception cref="HtmlWebException">Thrown when unable to load the HTML Document</exception>
-        /// <exception cref="NodeNotFoundException">Thrown when a node was not found</exception>
-        public static async Task<List<Dependent>> GetDependents(string user, string repository, string? packageID = null)
+        private static List<Dependent> FindDependents(HtmlNode boxNode)
         {
             var list = new List<Dependent>();
-
-            var web = new HtmlWeb();
-            var url = $"https://github.com/{user}/{repository}/network/dependents";
-            if (packageID != null)
-                url = $"{url}?package_id={packageID}";
             
-            var document = await web.LoadFromWebAsync(url);
-            if(document == null)
-                throw new HtmlWebException($"Unable to load from {url}");
-
-            var node = document.DocumentNode;
-
-            var boxNode = node.SelectSingleNode("//div[@class='repository-content ']/div[@class='gutter-condensed gutter-lg d-flex']/div[@class='flex-shrink-0 col-9']/div[@id='dependents']/div[@class='Box']");
-            if(boxNode == null)
-                throw new NodeNotFoundException("Unable to find Box Node!");
-
             var dependentNodes = boxNode.SelectNodes(boxNode.XPath + "/div[@class='Box-row d-flex flex-items-center']");
             if (dependentNodes == null || dependentNodes.Count == 0)
                 return list;
@@ -103,6 +79,91 @@ namespace GitHubDependents
                 return dependent;
             }).NotNull());
             
+            return list;
+        }
+        
+        /// <summary>
+        /// Scrapes GitHub for Dependents of a specific repository.
+        /// </summary>
+        /// <param name="user">GitHub user or organization, eg: dotnet</param>
+        /// <param name="repository">GitHub repository name, eg: roslyn</param>
+        /// <param name="packageID">Optional package ID to use, eg: UGFja2FnZS0xNTY3MzEzNTc%3D</param>
+        /// <param name="pages">Optional amount of pages to load.
+        /// The function will not throw an exception if the provided amount of pages is higher than the actual amount of available pages.
+        /// If you don't know the exact amount of pages you want to load but want to load all, simply pass 255.</param>
+        /// <returns>List of all Dependents using the repository</returns>
+        /// <exception cref="HtmlWebException">Thrown when unable to load the HTML Document</exception>
+        /// <exception cref="NodeNotFoundException">Thrown when a node was not found</exception>
+        public static async Task<List<Dependent>> GetDependents(string user, string repository, string? packageID = null, byte pages = 1)
+        {
+            if(pages == 0)
+                throw new ArgumentException("Can not load 0 pages!", nameof(pages));
+            
+            var list = new List<Dependent>();
+            var web = new HtmlWeb();
+            
+            var url = $"https://github.com/{user}/{repository}/network/dependents";
+            if (packageID != null)
+                url = $"{url}?package_id={packageID}";
+            
+            var availablePages = 1;
+
+            for (var i = 0; i < availablePages; i++)
+            {
+                var document = await web.LoadFromWebAsync(url);
+                if(document == null)
+                    throw new HtmlWebException($"Unable to load from {url}");
+
+                var node = document.DocumentNode;
+
+                var boxNode = node.SelectSingleNode("//div[@class='repository-content ']/div[@class='gutter-condensed gutter-lg d-flex']/div[@class='flex-shrink-0 col-9']/div[@id='dependents']/div[@class='Box']");
+                if(boxNode == null)
+                    throw new NodeNotFoundException("Unable to find Box Node!");
+
+                if (pages != 1)
+                {
+                    var boxHeaderNode = boxNode.SelectSingleNode(boxNode.XPath + "/div[@class='Box-header clearfix']/div/div");
+                    var repoLinkNode = boxHeaderNode?.SelectSingleNode(boxHeaderNode.XPath + "/a");
+                    if (repoLinkNode != null)
+                    {
+                        var sRepositories = repoLinkNode.DecodeInnerText();
+                        if (!sRepositories.IsEmpty())
+                        {
+                            sRepositories = sRepositories.Replace("\n","").Trim().Replace("Repositories", "").Trim().Replace(",","");
+                            if (int.TryParse(sRepositories, out var repoCount))
+                            {
+                                availablePages = repoCount / 30;
+                                if (availablePages > pages)
+                                    availablePages = pages;
+                            }
+                        }
+                    }
+                }
+
+                list.AddRange(FindDependents(boxNode));
+
+                if (i+1 == pages) break;
+                
+                var buttonGroupNode = node.SelectSingleNode("//div[@class='paginate-container']/div[@class='BtnGroup']");
+                if (buttonGroupNode == null) break;
+
+                var buttonNodes = buttonGroupNode.SelectNodes(buttonGroupNode.XPath + "/button");
+                var buttonLinkNodes = buttonGroupNode.SelectNodes(buttonGroupNode.XPath + "/a");
+                
+                if (buttonLinkNodes == null || buttonLinkNodes.Count == 0) break;
+                if(buttonNodes != null && buttonNodes.Count != 0)
+                {
+                    if (buttonNodes.Any(x => x.DecodeInnerText().Equals("Next", StringComparison.OrdinalIgnoreCase)))
+                        break;
+                }
+                
+                var nextLinkNode = buttonLinkNodes.FirstOrDefault(x => x.DecodeInnerText().Equals("Next", StringComparison.OrdinalIgnoreCase));
+                var nextLink = nextLinkNode?.GetValue("href");
+                if (nextLink == null) break;
+
+                url = nextLink;
+            }
+
             return list;
         }
     }

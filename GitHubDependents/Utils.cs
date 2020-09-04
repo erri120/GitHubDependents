@@ -47,10 +47,5 @@ namespace GitHubDependents
         {
             return HttpUtility.HtmlDecode(node?.InnerText) ?? string.Empty;
         }
-
-        internal static string DecodeString(this string s)
-        {
-            return HttpUtility.HtmlDecode(s);
-        }
     }
 }

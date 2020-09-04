@@ -25,7 +25,7 @@ namespace GitHubDependents.Test
         [Fact]
         public async void TestGetDependents()
         {
-            List<Dependent> list = await GitHubDependents.GetDependents("dotnet", "roslyn");
+            List<Dependent> list = await GitHubDependents.GetDependents("dotnet", "roslyn", null, 2);
             
             Assert.NotEmpty(list);
         }
