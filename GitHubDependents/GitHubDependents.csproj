@@ -3,11 +3,22 @@
     <PropertyGroup>
         <TargetFramework>netstandard2.1</TargetFramework>
         <Nullable>enable</Nullable>
+        <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+        <Title>GitHub Dependents</Title>
+        <Authors>erri120</Authors>
+        <Description>Makeshift lib for getting Dependents of a GitHub Repo </Description>
+        <Copyright>2020</Copyright>
+        <PackageProjectUrl>https://github.com/erri120/GitHubDependents</PackageProjectUrl>
+        <RepositoryUrl>https://github.com/erri120/GitHubDependents</RepositoryUrl>
+        <RepositoryType>git</RepositoryType>
+        <Company>erri120</Company>
     </PropertyGroup>
 
     <ItemGroup>
       <PackageReference Include="HtmlAgilityPack" Version="1.11.24" />
-      <PackageReference Include="JetBrains.Annotations" Version="2020.1.0" />
+      <PackageReference Include="JetBrains.Annotations" Version="2020.1.0">
+          <PrivateAssets>all</PrivateAssets>
+      </PackageReference>
     </ItemGroup>
 
 </Project>
