@@ -8,6 +8,7 @@ ProjectSection(SolutionItems) = preProject
 	.gitattributes = .gitattributes
 	.gitignore = .gitignore
 	LICENSE = LICENSE
+	README.md = README.md
 EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GitHubDependents.Test", "GitHubDependents.Test\GitHubDependents.Test.csproj", "{BB158789-73D3-454A-B342-5292904A310E}"
