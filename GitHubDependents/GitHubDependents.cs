@@ -28,25 +28,43 @@ namespace GitHubDependents
     public class Dependent
     {
         /// <summary>
-        /// Link to the avatar of the user/organization
+        /// Link to the avatar of the user/organization.
         /// </summary>
         public string? AvatarURL { get; set; }
         /// <summary>
-        /// Name of the user/organization
+        /// Name of the user/organization.
         /// </summary>
         public string? User { get; set; }
         /// <summary>
-        /// Name of the repository
+        /// Name of the repository.
         /// </summary>
         public string? Repository { get; set; }
         /// <summary>
-        /// Amount of Stars the repository has
+        /// Amount of Stars the repository has.
         /// </summary>
         public int Stars { get; set; }
         /// <summary>
-        /// Amount of Forks the repository has
+        /// Amount of Forks the repository has.
         /// </summary>
         public int Forks { get; set; }
+
+        /// <inheritdoc />
+        public override string ToString()
+        {
+            return $"{User}/{Repository}";
+        }
+
+        /// <summary>
+        /// Returns a string that represents the current object.
+        /// </summary>
+        /// <param name="withDetails">Whether to append extra details (Amount of Stars and Forks) to the string.</param>
+        /// <returns>String representation of the current object.</returns>
+        public string ToString(bool withDetails)
+        {
+            return withDetails 
+                ? $"{ToString()}: {Stars} Stars, {Forks} forks" 
+                : ToString();
+        }
     }
     
     [PublicAPI]
