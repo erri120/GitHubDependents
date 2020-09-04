@@ -39,6 +39,14 @@ namespace GitHubDependents
         /// Name of the repository
         /// </summary>
         public string? Repository { get; set; }
+        /// <summary>
+        /// Amount of Stars the repository has
+        /// </summary>
+        public int Stars { get; set; }
+        /// <summary>
+        /// Amount of Forks the repository has
+        /// </summary>
+        public int Forks { get; set; }
     }
     
     [PublicAPI]
@@ -61,6 +69,22 @@ namespace GitHubDependents
                 {
                     var imgSrc = imgNode.GetValue("src");
                     dependent.AvatarURL = imgSrc;
+                }
+
+                var detailsNode = x.SelectSingleNode(x.XPath + "/div");
+                var spanNodes = detailsNode?.SelectNodes(detailsNode.XPath + "/span");
+                if (spanNodes != null && spanNodes.Count == 2)
+                {
+                    var starNode = spanNodes[0];
+                    var forkNode = spanNodes[1];
+
+                    var sStars = starNode.DecodeInnerText().Replace("\n", "").Trim().Replace(",", "");
+                    var sForks = forkNode.DecodeInnerText().Replace("\n", "").Trim().Replace(",", "");
+
+                    if (int.TryParse(sStars, out var stars))
+                        dependent.Stars = stars;
+                    if (int.TryParse(sForks, out var forks))
+                        dependent.Forks = forks;
                 }
 
                 var spanNode = x.SelectSingleNode(x.XPath + "/span");
