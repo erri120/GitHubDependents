@@ -136,7 +136,7 @@ namespace GitHubDependents
         /// <returns>List of all Dependents using the repository</returns>
         /// <exception cref="HtmlWebException">Thrown when unable to load the HTML Document</exception>
         /// <exception cref="NodeNotFoundException">Thrown when a node was not found</exception>
-        public static async IAsyncEnumerable<Dependent> GetDependents(string user, string repository, string? packageID = null, byte pages = 1)
+        public static async IAsyncEnumerable<Dependent> GetDependents(string user, string repository, string? packageID = null, ushort pages = 1)
         {
             if (pages == 0)
                 throw new ArgumentException("Can not load 0 pages!", nameof(pages));
@@ -147,9 +147,9 @@ namespace GitHubDependents
             if (packageID != null)
                 url = $"{url}?package_id={packageID}";
 
-            var availablePages = 1;
+            bool queriedForAvailable = false;
 
-            for (var i = 0; i < availablePages; i++)
+            for (var i = 0; i < pages; i++)
             {
                 var document = await web.LoadFromWebAsync(url);
                 if (document == null)
@@ -161,23 +161,13 @@ namespace GitHubDependents
                 if (boxNode == null)
                     throw new NodeNotFoundException("Unable to find Box Node!");
 
-                if (pages != 1)
+                if (pages != 1 && !queriedForAvailable)
                 {
-                    var boxHeaderNode = boxNode.SelectSingleNode(boxNode.XPath + "/div[@class='Box-header clearfix']/div/div");
-                    var repoLinkNode = boxHeaderNode?.SelectSingleNode(boxHeaderNode.XPath + "/a");
-                    if (repoLinkNode != null)
+                    queriedForAvailable = true;
+                    var availablePages = GetAvailablePages(boxNode);
+                    if (availablePages < pages)
                     {
-                        var sRepositories = repoLinkNode.DecodeInnerText();
-                        if (!sRepositories.IsEmpty())
-                        {
-                            sRepositories = sRepositories.Replace("\n", "").Trim().Replace("Repositories", "").Trim().Replace(",", "");
-                            if (int.TryParse(sRepositories, out var repoCount))
-                            {
-                                availablePages = repoCount / 30;
-                                if (availablePages > pages)
-                                    availablePages = pages;
-                            }
-                        }
+                        pages = checked((ushort)availablePages);
                     }
                 }
 
@@ -207,6 +197,26 @@ namespace GitHubDependents
 
                 url = nextLink;
             }
+        }
+
+        private static int GetAvailablePages(HtmlNode boxNode)
+        {
+            var boxHeaderNode = boxNode.SelectSingleNode(boxNode.XPath + "/div[@class='Box-header clearfix']/div/div");
+            var repoLinkNode = boxHeaderNode?.SelectSingleNode(boxHeaderNode.XPath + "/a");
+            if (repoLinkNode != null)
+            {
+                var sRepositories = repoLinkNode.DecodeInnerText();
+                if (!sRepositories.IsEmpty())
+                {
+                    sRepositories = sRepositories.Replace("\n", "").Trim().Replace("Repositories", "").Trim().Replace(",", "");
+                    if (int.TryParse(sRepositories, out var repoCount))
+                    {
+                        return repoCount / 30;
+                    }
+                }
+            }
+
+            throw new ArgumentException("Could not locate how many available pages there were.");
         }
     }
 }
