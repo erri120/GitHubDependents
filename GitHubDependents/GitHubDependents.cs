@@ -211,7 +211,7 @@ namespace GitHubDependents
                     sRepositories = sRepositories.Replace("\n", "").Trim().Replace("Repositories", "").Trim().Replace(",", "");
                     if (int.TryParse(sRepositories, out var repoCount))
                     {
-                        return repoCount / 30;
+                        return (int)Math.Ceiling(repoCount / 30d);
                     }
                 }
             }
