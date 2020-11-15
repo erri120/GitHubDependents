@@ -17,6 +17,7 @@
 
 using System.Collections.Generic;
 using Xunit;
+using System.Linq;
 
 namespace GitHubDependents.Test
 {
@@ -25,8 +26,8 @@ namespace GitHubDependents.Test
         [Fact]
         public async void TestGetDependents()
         {
-            List<Dependent> list = await GitHubDependents.GetDependents("dotnet", "roslyn", "UGFja2FnZS0xNTY3NTE0NTM%3D", 2);
-            
+            List<Dependent> list = await GitHubDependents.GetDependents("dotnet", "roslyn", "UGFja2FnZS0xNTY3NTE0NTM%3D", 2).ToListAsync();
+
             Assert.NotEmpty(list);
             //loading 2 pages but not every page has exactly 30 repos...
             Assert.True(list.Count > 45);

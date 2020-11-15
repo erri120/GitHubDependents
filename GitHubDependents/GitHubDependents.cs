@@ -1,4 +1,4 @@
-﻿// /*
+// /*
 //     Copyright (C) 2020  erri120
 // 
 //     This program is free software: you can redistribute it and/or modify
@@ -136,12 +136,11 @@ namespace GitHubDependents
         /// <returns>List of all Dependents using the repository</returns>
         /// <exception cref="HtmlWebException">Thrown when unable to load the HTML Document</exception>
         /// <exception cref="NodeNotFoundException">Thrown when a node was not found</exception>
-        public static async Task<List<Dependent>> GetDependents(string user, string repository, string? packageID = null, byte pages = 1)
+        public static async IAsyncEnumerable<Dependent> GetDependents(string user, string repository, string? packageID = null, byte pages = 1)
         {
             if(pages == 0)
                 throw new ArgumentException("Can not load 0 pages!", nameof(pages));
             
-            var list = new List<Dependent>();
             var web = new HtmlWeb();
             
             var url = $"https://github.com/{user}/{repository}/network/dependents";
@@ -182,7 +181,10 @@ namespace GitHubDependents
                     }
                 }
 
-                list.AddRange(FindDependents(boxNode));
+                foreach (var dep in FindDependents(boxNode))
+                {
+                    yield return dep;
+                }
 
                 if (i+1 == pages) break;
                 
@@ -205,8 +207,6 @@ namespace GitHubDependents
 
                 url = nextLink;
             }
-
-            return list;
         }
     }
 }
