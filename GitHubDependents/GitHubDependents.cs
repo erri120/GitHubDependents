@@ -61,23 +61,23 @@ namespace GitHubDependents
         /// <returns>String representation of the current object.</returns>
         public string ToString(bool withDetails)
         {
-            return withDetails 
-                ? $"{ToString()}: {Stars} Stars, {Forks} forks" 
+            return withDetails
+                ? $"{ToString()}: {Stars} Stars, {Forks} forks"
                 : ToString();
         }
     }
-    
+
     [PublicAPI]
     public static class GitHubDependents
     {
         private static List<Dependent> FindDependents(HtmlNode boxNode)
         {
             var list = new List<Dependent>();
-            
+
             var dependentNodes = boxNode.SelectNodes(boxNode.XPath + "/div[@class='Box-row d-flex flex-items-center']");
             if (dependentNodes == null || dependentNodes.Count == 0)
                 return list;
-            
+
             list.AddRange(dependentNodes.Select(x =>
             {
                 var dependent = new Dependent();
@@ -120,10 +120,10 @@ namespace GitHubDependents
 
                 return dependent;
             }).NotNull());
-            
+
             return list;
         }
-        
+
         /// <summary>
         /// Scrapes GitHub for Dependents of a specific repository.
         /// </summary>
@@ -138,27 +138,27 @@ namespace GitHubDependents
         /// <exception cref="NodeNotFoundException">Thrown when a node was not found</exception>
         public static async IAsyncEnumerable<Dependent> GetDependents(string user, string repository, string? packageID = null, byte pages = 1)
         {
-            if(pages == 0)
+            if (pages == 0)
                 throw new ArgumentException("Can not load 0 pages!", nameof(pages));
-            
+
             var web = new HtmlWeb();
-            
+
             var url = $"https://github.com/{user}/{repository}/network/dependents";
             if (packageID != null)
                 url = $"{url}?package_id={packageID}";
-            
+
             var availablePages = 1;
 
             for (var i = 0; i < availablePages; i++)
             {
                 var document = await web.LoadFromWebAsync(url);
-                if(document == null)
+                if (document == null)
                     throw new HtmlWebException($"Unable to load from {url}");
 
                 var node = document.DocumentNode;
 
                 var boxNode = node.SelectSingleNode("//div[@class='repository-content ']/div[@class='gutter-condensed gutter-lg d-flex']/div[@class='flex-shrink-0 col-9']/div[@id='dependents']/div[@class='Box']");
-                if(boxNode == null)
+                if (boxNode == null)
                     throw new NodeNotFoundException("Unable to find Box Node!");
 
                 if (pages != 1)
@@ -170,7 +170,7 @@ namespace GitHubDependents
                         var sRepositories = repoLinkNode.DecodeInnerText();
                         if (!sRepositories.IsEmpty())
                         {
-                            sRepositories = sRepositories.Replace("\n","").Trim().Replace("Repositories", "").Trim().Replace(",","");
+                            sRepositories = sRepositories.Replace("\n", "").Trim().Replace("Repositories", "").Trim().Replace(",", "");
                             if (int.TryParse(sRepositories, out var repoCount))
                             {
                                 availablePages = repoCount / 30;
@@ -186,21 +186,21 @@ namespace GitHubDependents
                     yield return dep;
                 }
 
-                if (i+1 == pages) break;
-                
+                if (i + 1 == pages) break;
+
                 var buttonGroupNode = node.SelectSingleNode("//div[@class='paginate-container']/div[@class='BtnGroup']");
                 if (buttonGroupNode == null) break;
 
                 var buttonNodes = buttonGroupNode.SelectNodes(buttonGroupNode.XPath + "/button");
                 var buttonLinkNodes = buttonGroupNode.SelectNodes(buttonGroupNode.XPath + "/a");
-                
+
                 if (buttonLinkNodes == null || buttonLinkNodes.Count == 0) break;
-                if(buttonNodes != null && buttonNodes.Count != 0)
+                if (buttonNodes != null && buttonNodes.Count != 0)
                 {
                     if (buttonNodes.Any(x => x.DecodeInnerText().Equals("Next", StringComparison.OrdinalIgnoreCase)))
                         break;
                 }
-                
+
                 var nextLinkNode = buttonLinkNodes.FirstOrDefault(x => x.DecodeInnerText().Equals("Next", StringComparison.OrdinalIgnoreCase));
                 var nextLink = nextLinkNode?.GetValue("href");
                 if (nextLink == null) break;
