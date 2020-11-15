@@ -70,6 +70,8 @@ namespace GitHubDependents
     [PublicAPI]
     public static class GitHubDependents
     {
+        public const int ListingsPerPage = 30;
+
         private static List<Dependent> FindDependents(HtmlNode boxNode)
         {
             var list = new List<Dependent>();
@@ -211,7 +213,7 @@ namespace GitHubDependents
                     sRepositories = sRepositories.Replace("\n", "").Trim().Replace("Repositories", "").Trim().Replace(",", "");
                     if (int.TryParse(sRepositories, out var repoCount))
                     {
-                        return (int)Math.Ceiling(repoCount / 30d);
+                        return (int)Math.Ceiling(repoCount * 1.0 / ListingsPerPage);
                     }
                 }
             }
