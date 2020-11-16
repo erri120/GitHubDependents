@@ -12,6 +12,7 @@
         <RepositoryUrl>https://github.com/erri120/GitHubDependents</RepositoryUrl>
         <RepositoryType>git</RepositoryType>
         <Company>erri120</Company>
+        <PackageVersion>1.1.1</PackageVersion>
     </PropertyGroup>
 
     <ItemGroup>
