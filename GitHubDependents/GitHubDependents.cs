@@ -159,7 +159,7 @@ namespace GitHubDependents
 
                 var node = document.DocumentNode;
 
-                var boxNode = node.SelectSingleNode("//div[@class='repository-content ']/div[@class='gutter-condensed gutter-lg d-flex']/div[@class='flex-shrink-0 col-9']/div[@id='dependents']/div[@class='Box']");
+                var boxNode = node.SelectSingleNode("//div[@class='Layout-main']/div[@id='dependents']/div[@class='Box']");
                 if (boxNode == null)
                     throw new NodeNotFoundException("Unable to find Box Node!");
 
